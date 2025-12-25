@@ -1,0 +1,35 @@
+
+> client-web@0.0.0 dev
+> vite
+
+▲ [WARNING] Duplicate key "build-only" in object literal [duplicate-object-key]
+
+    package.json:14:4:
+      14 │     "build-only": "vite build",
+         ╵     ~~~~~~~~~~~~
+
+  The original key "build-only" is here:
+
+    package.json:10:4:
+      10 │     "build-only": "vite build",
+         ╵     ~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate key "type-check" in object literal [duplicate-object-key]
+
+    package.json:15:4:
+      15 │     "type-check": "vue-tsc --build"
+         ╵     ~~~~~~~~~~~~
+
+  The original key "type-check" is here:
+
+    package.json:11:4:
+      11 │     "type-check": "vue-tsc --build --force",
+         ╵     ~~~~~~~~~~~~
+
+
+  VITE v6.3.5  ready in 1799 ms
+
+  ➜  Local:   http://localhost:3001/
+  ➜  Network: use --host to expose
+  ➜  Vue DevTools: Open http://localhost:3001/__devtools__/ as a separate window
+  ➜  Vue DevTools: Press Option(⌥)+Shift(⇧)+D in App to toggle the Vue DevTools

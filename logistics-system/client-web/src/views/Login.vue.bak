@@ -1,0 +1,341 @@
+<template>
+  <div class="login-page">
+    <div class="login-container">
+      <div class="login-card">
+        <div class="logo-section">
+          <div class="logo">🚚</div>
+          <h1>物流管理系统</h1>
+          <p>客户端登录</p>
+        </div>
+        
+        <el-form
+          ref="loginFormRef"
+          :model="loginForm"
+          :rules="formRules"
+          class="login-form"
+          size="large"
+          status-icon
+        >
+          <el-form-item prop="username">
+            <el-input
+              v-model="loginForm.username"
+              placeholder="请输入用户名"
+              prefix-icon="User"
+              clearable
+              @keyup.enter="handleLogin"
+            />
+          </el-form-item>
+          
+          <el-form-item prop="password">
+            <el-input
+              v-model="loginForm.password"
+              type="password"
+              placeholder="请输入密码"
+              prefix-icon="Lock"
+              show-password
+              clearable
+              @keyup.enter="handleLogin"
+            />
+          </el-form-item>
+          
+          <el-form-item>
+            <el-button
+              type="primary"
+              class="login-btn"
+              :loading="loading"
+              @click="handleLogin"
+            >
+              {{ loading ? '登录中...' : '登录' }}
+            </el-button>
+          </el-form-item>
+        </el-form>
+        
+        <div class="login-footer">
+          <div class="demo-accounts">
+            <h4>演示账号</h4>
+            <div class="account-list">
+              <div class="account-item" @click="fillAccount('alibaba', '123456')">
+                <span class="role">企业客户</span>
+                <span class="username">alibaba / 123456</span>
+              </div>
+              <div class="account-item" @click="fillAccount('tencent', '123456')">
+                <span class="role">企业客户</span>
+                <span class="username">tencent / 123456</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="register-link">
+            还没有账号？
+            <router-link to="/register" class="link">立即注册</router-link>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, FormInstance, FormRules } from 'element-plus'
+import { authApi } from '../utils/api'
+
+const router = useRouter()
+const loginFormRef = ref<FormInstance>()
+const loading = ref(false)
+
+const loginForm = reactive({
+  username: '',
+  password: ''
+})
+
+const formRules: FormRules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, max: 20, message: '用户名长度在 2 到 20 个字符', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于 6 位', trigger: 'blur' }
+  ]
+}
+
+const handleLogin = async () => {
+  if (!loginFormRef.value) return
+  
+  try {
+    const valid = await loginFormRef.value.validate()
+    if (!valid) return
+    
+    loading.value = true
+    
+    const response = await authApi.login({
+      username: loginForm.username,
+      password: loginForm.password
+    })
+    
+    if (response.data.code === 200) {
+      const userData = response.data.data
+      
+      // 保存用户信息到localStorage
+      localStorage.setItem('userInfo', JSON.stringify(userData))
+      localStorage.setItem('token', 'temp-token') // 临时token，实际应从响应中获取
+      
+      ElMessage.success('登录成功！')
+      
+      // 跳转到首页
+      router.push('/')
+    } else {
+      ElMessage.error(response.data.message || '登录失败')
+    }
+  } catch (error) {
+    console.log('登录失败：', error)
+    ElMessage.error('登录失败，请检查用户名和密码')
+  } finally {
+    loading.value = false
+  }
+}
+
+const fillAccount = (username: string, password: string) => {
+  loginForm.username = username
+  loginForm.password = password
+}
+</script>
+
+<style scoped>
+.login-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.logo-section {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.logo {
+  font-size: 60px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.logo-section h1 {
+  color: #2c3e50;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo-section p {
+  color: #7f8c8d;
+  font-size: 16px;
+  margin: 0;
+}
+
+.login-form {
+  margin-bottom: 30px;
+}
+
+.login-btn {
+  width: 100%;
+  height: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.login-footer {
+  text-align: center;
+}
+
+.demo-accounts {
+  margin-bottom: 25px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.demo-accounts h4 {
+  color: #2c3e50;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 15px 0;
+}
+
+.account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+}
+
+.account-item:hover {
+  background: #e3f2fd;
+  border-color: #3498db;
+  transform: translateX(2px);
+}
+
+.role {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.username {
+  font-size: 13px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.register-link {
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.link {
+  color: #3498db;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.link:hover {
+  color: #2980b9;
+  text-decoration: underline;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+  border: 1px solid #e1e6ef;
+}
+
+:deep(.el-input__wrapper:hover) {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  border-color: #3498db;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  border-color: #667eea;
+}
+
+:deep(.el-form-item__error) {
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .login-page {
+    padding: 15px;
+  }
+  
+  .login-card {
+    padding: 30px 25px;
+  }
+  
+  .logo {
+    font-size: 50px;
+  }
+  
+  .logo-section h1 {
+    font-size: 24px;
+  }
+  
+  .account-item {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+}
+</style> 

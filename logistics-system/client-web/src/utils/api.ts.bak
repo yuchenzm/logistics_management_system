@@ -1,0 +1,281 @@
+import axios from 'axios'
+
+// API基础URL
+const API_BASE_URL = 'http://localhost:8080/api'
+
+// 创建axios实例
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
+// 请求拦截器 - 添加token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// 响应拦截器 - 处理错误
+apiClient.interceptors.response.use(
+  (response) => {
+    return response
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // token过期，清除本地存储并跳转到登录页
+      localStorage.removeItem('token')
+      localStorage.removeItem('userInfo')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
+// 用户认证相关API
+export const authApi = {
+  // 用户登录
+  login: (data: { username: string; password: string }) =>
+    apiClient.post('/users/login', data),
+    
+  // 用户注册
+  register: (data: {
+    username: string
+    password: string
+    email: string
+    phone: string
+  }) => apiClient.post('/users', data),
+  
+  // 获取用户信息
+  getUserInfo: (id: number) => apiClient.get(`/users/${id}`),
+  
+  // 更新用户信息
+  updateProfile: (id: number, data: any) => apiClient.put(`/users/${id}`, data),
+  
+  // 修改密码
+  updatePassword: (id: number, data: {
+    oldPassword: string
+    newPassword: string
+  }) => apiClient.post(`/users/${id}/password`, data)
+}
+
+// 订单相关API
+export const orderApi = {
+  // 获取所有订单
+  getAll: () => apiClient.get('/orders'),
+  
+  // 根据客户ID获取订单
+  getByCustomerId: (customerId: number) => 
+    apiClient.get(`/orders/customer/${customerId}`),
+  
+  // 根据状态获取订单
+  getByStatus: (status: string) => 
+    apiClient.get(`/orders/status/${status}`),
+  
+  // 分页查询订单
+  getByPage: (pageRequest: {
+    pageNum: number
+    pageSize: number
+    keyword?: string
+    status?: string
+  }) => apiClient.post('/orders/page', pageRequest),
+  
+  // 根据订单号查询
+  getByOrderNumber: (orderNumber: string) => 
+    apiClient.get(`/orders/number/${orderNumber}`),
+  
+  // 获取订单详情
+  getOrderDetail: (id: number) => apiClient.get(`/orders/${id}`),
+  
+  // 创建订单
+  createOrder: (data: {
+    customerName: string
+    customerId?: number
+    originAddress: string
+    destinationAddress: string
+    pickupDate?: string
+    deliveryDate?: string
+    expectedDeliveryDate?: string
+    totalWeight: number
+    totalVolume: number
+    totalAmount: number
+    priority: string
+    specialInstructions?: string
+  }) => apiClient.post('/orders', data),
+  
+  // 更新订单状态
+  updateOrderStatus: (id: number, status: string) => 
+    apiClient.put(`/orders/${id}/status`, { orderStatus: status }),
+  
+  // 删除订单
+  deleteOrder: (id: number) => apiClient.delete(`/orders/${id}`),
+  
+  // 获取订单统计
+  getOrderStats: () => apiClient.get('/orders/statistics')
+}
+
+// 客户相关API
+export const customerApi = {
+  // 获取所有活跃客户
+  getAllActive: () => apiClient.get('/customers/active'),
+  
+  // 分页查询客户
+  getByPage: (pageRequest: {
+    pageNum: number
+    pageSize: number
+    keyword?: string
+  }) => apiClient.post('/customers/page', pageRequest),
+  
+  // 搜索客户
+  search: (keyword: string) => 
+    apiClient.get(`/customers/search?keyword=${keyword}`),
+  
+  // 根据ID查询客户
+  getById: (id: number) => apiClient.get(`/customers/${id}`),
+  
+  // 保存客户
+  save: (data: {
+    name: string
+    contactPerson: string
+    phone: string
+    email: string
+    address: string
+    city: string
+    province: string
+    postalCode?: string
+    customerType: string
+  }) => apiClient.post('/customers', data),
+  
+  // 删除客户
+  delete: (id: number) => apiClient.delete(`/customers/${id}`)
+}
+
+// 运输相关API
+export const transportApi = {
+  // 分页查询运输
+  getByPage: (pageRequest: {
+    pageNum: number
+    pageSize: number
+    keyword?: string
+    status?: string
+  }) => apiClient.post('/transports/page', pageRequest),
+  
+  // 根据状态查询运输
+  getByStatus: (status: string) => 
+    apiClient.get(`/transports/status/${status}`),
+  
+  // 根据运输号查询
+  getByTransportNumber: (transportNumber: string) => 
+    apiClient.get(`/transports/number/${transportNumber}`),
+  
+  // 获取运输详情
+  getById: (id: number) => apiClient.get(`/transports/${id}`),
+  
+  // 创建运输
+  create: (data: any) => apiClient.post('/transports', data),
+  
+  // 更新运输状态
+  updateStatus: (id: number, status: string) => 
+    apiClient.put(`/transports/${id}/status`, status),
+  
+  // 删除运输
+  delete: (id: number) => apiClient.delete(`/transports/${id}`)
+}
+
+// 运费相关API
+export const shippingApi = {
+  // 获取所有运费
+  getAll: () => apiClient.get('/shipping-rates'),
+  
+  // 分页查询运费
+  getByPage: (pageRequest: {
+    pageNum: number
+    pageSize: number
+    keyword?: string
+  }) => apiClient.post('/shipping-rates/page', pageRequest),
+  
+  // 根据路线查询运费
+  getByRoute: (originCity: string, destinationCity: string) =>
+    apiClient.get(`/shipping-rates/route?originCity=${originCity}&destinationCity=${destinationCity}`),
+  
+  // 根据运输类型查询运费
+  getByTransportType: (transportType: string) =>
+    apiClient.get(`/shipping-rates/type/${transportType}`),
+  
+  // 计算运费
+  calculateShipping: (data: {
+    originCity: string
+    destinationCity: string
+    transportType: string
+    weightRangeMin: number
+    weightRangeMax: number
+    baseRate: number
+    ratePerKg: number
+    ratePerKm: number
+  }) => apiClient.post('/shipping-rates/calculate', data),
+  
+  // 搜索运费
+  search: (keyword: string) => 
+    apiClient.get(`/shipping-rates/search?keyword=${keyword}`),
+  
+  // 根据ID查询运费
+  getById: (id: number) => apiClient.get(`/shipping-rates/${id}`),
+  
+  // 保存运费
+  save: (data: any) => apiClient.post('/shipping-rates', data),
+  
+  // 批量更新运费
+  batchUpdate: (data: any[]) => apiClient.post('/shipping-rates/batch-update', data),
+  
+  // 删除运费
+  delete: (id: number) => apiClient.delete(`/shipping-rates/${id}`)
+}
+
+// 运输跟踪相关API
+export const trackingApi = {
+  // 根据订单号跟踪物流
+  trackByOrderNumber: (orderNumber: string) =>
+    apiClient.get(`/orders/number/${orderNumber}`),
+    
+  // 根据运输单号跟踪
+  trackByTransportNumber: (transportNumber: string) =>
+    apiClient.get(`/transports/number/${transportNumber}`),
+    
+  // 获取运输历史记录
+  getTrackingHistory: (transportId: number) =>
+    apiClient.get(`/transports/${transportId}/tracking`)
+}
+
+// 货物相关API
+export const goodsApi = {
+  // 获取所有货物
+  getAll: () => apiClient.get('/goods'),
+  
+  // 分页查询货物
+  getByPage: (pageRequest: {
+    pageNum: number
+    pageSize: number
+    keyword?: string
+  }) => apiClient.post('/goods/page', pageRequest),
+  
+  // 根据ID查询货物
+  getById: (id: number) => apiClient.get(`/goods/${id}`),
+  
+  // 保存货物
+  save: (data: any) => apiClient.post('/goods', data),
+  
+  // 删除货物
+  delete: (id: number) => apiClient.delete(`/goods/${id}`)
+}
+
+export default apiClient 

@@ -1,0 +1,23 @@
+
+> user-web@0.0.0 dev
+> vite
+
+▲ [WARNING] Duplicate key "dev" in object literal [duplicate-object-key]
+
+    package.json:14:4:
+      14 │     "dev": "vite"
+         ╵     ~~~~~
+
+  The original key "dev" is here:
+
+    package.json:7:4:
+      7 │     "dev": "vite",
+        ╵     ~~~~~
+
+
+  VITE v6.3.5  ready in 1112 ms
+
+  ➜  Local:   http://localhost:3002/
+  ➜  Network: use --host to expose
+  ➜  Vue DevTools: Open http://localhost:3002/__devtools__/ as a separate window
+  ➜  Vue DevTools: Press Option(⌥)+Shift(⇧)+D in App to toggle the Vue DevTools
